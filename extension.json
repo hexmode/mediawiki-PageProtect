@@ -1,0 +1,42 @@
+{
+	"name": "PageProtect",
+	"version": "0.1.0",
+	"license-name": "GPL-3.0+",
+	"author": [
+		"[http://mwstake.org Mark A. Hershberger]"
+	],
+	"require": [ "1.26" ],
+	"url": "https://www.mediawiki.org/wiki/Extension:PageProtect",
+	"descriptionmsg": "pageprotect-desc",
+	"type": "specialpage",
+	"MessagesDirs": {
+		"PageProtect": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"PageProtect\\PageProtect": "src/PageProtect.php",
+		"PageProtect\\Hook": "src/Hook.php"
+	},
+	"GroupPermissions": {
+	},
+	"AvailableRights": [
+	],
+	"ConfigRegistry": {
+		"PageProtect": "PageProtect\\Hook::makeConfig"
+	},
+    "Hooks": {
+		"TitleGetRestrictionTypes": "PageProtect\\Hook::onTitleGetRestrictionTypes",
+		"ProtectionForm::buildForm": "PageProtect\\Hook::onProtectionFormBuildForm",
+		"ProtectionForm::save": "PageProtect\\Hook::onProtectionFormSave",
+		"ProtectionForm::showLogExtract": "PageProtect\\Hook::onProtectionFormShowLog",
+		"ArticleProtect": "PageProtect\\Hook::onArticleProtect",
+		"ArticleProtectComplete": "PageProtect\\Hook::onArticleProtectComplete",
+		"ImgAuthBeforeStream": "PageProtect\\Hook::onImgAuthBeforeStream",
+		"userCan": "PageProtect\\Hook::onUserCan"
+	},
+	"config": {
+		"_prefix": "PageProtect"
+	},
+	"manifest_version": 1
+}
