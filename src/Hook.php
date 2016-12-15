@@ -20,10 +20,12 @@
 namespace PageProtect;
 
 use Action;
-use OutputPage;
 use Article;
+use IContextSource;
+use OutputPage;
 use Title;
 use User;
+use Xml;
 
 class Hook {
 	/**
@@ -31,8 +33,12 @@ class Hook {
 	 *
 	 * @param Title $title the title we want to look at
 	 * @param array &$types types of protection available
+	 *
+	 * @return bool
 	 */
 	public static function onTitleGetRestrictionTypes( Title $title, array &$types ) {
+		// Don't think we want this
+		return true;
 	}
 
 	/**
@@ -40,9 +46,54 @@ class Hook {
 	 *
 	 * @param Article $article the title being (un)protected
 	 * @param string &$output the html form so far
+	 *
+	 * @return bool
 	 */
 	public static function onProtectionFormBuildForm( Article $article, string &$output ) {
+		$ctx = $article->getContext();
+		$user = $ctx->getUser();
+		if ( !$article->exists() ) {
+			return true;
+		}
+		$isAllowed = $article->getTitle()->userCan( "pageprotect-by-group", $user );
+		$disabledAttrib = $isAllowed ? [] : [ 'disabled' => 'disabled' ];
+
+        $output .= self::getProtectFormlet( "read", $disabledAttrib, $ctx );
+        $output .= self::getProtectFormlet( "edit", $disabledAttrib, $ctx );
+
+		return true;
 	}
+
+    public static function getProtectFormlet( string $type, array $disabledAttrib, IContextSource $ctx ) {
+        $output = "<tr><td>";
+		$output .= Xml::openElement( 'fieldset' );
+		$output .= "<legend>" . wfMessage( "pageprotect-$type-limit-legend" )->parse() .
+				"</legend>";
+
+		# Load requested restriction level, default allowing everyone...
+		$restriction = $ctx->getRequest()->getVal( $type . 'AllowedGroup', 'none' );
+
+		# Add a "no group restrictions" level
+		$groupList = User::getAllGroups();
+		array_unshift( $groupList, "anyone" );
+		# Show all groups in a <select>...
+		$attribs = [
+			'id'    => $type . 'AllowedGroup',
+			'name'  => $type . 'AllowedGroup',
+			'size'  => count( $groupList ),
+		] + $disabledAttrib;
+		$output .= Xml::openElement( 'select', $attribs );
+		foreach ( $groupList as $group ) {
+            if ( $group === "anyone" ) {
+                $label = wfMessage( 'pageprotect-group-' . $group )->text();
+            } else {
+                $label = wfMessage( 'group-' . $group )->text();
+            }
+
+			$output .= Xml::option( $label, $group, $group == $restriction );
+		}
+		return $output . Xml::closeElement( 'select' ) . "</td></tr>";
+    }
 
 	/**
 	 * Called when a protection form is submitted.

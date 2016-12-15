@@ -3,5 +3,8 @@
 		"authors": [
 		]
 	},
-	"pageprotect-desc": "Control read and edit access to a page by group."
+	"pageprotect-desc": "Control read and edit access to a page by group.",
+	"pageprotect-read-limit-legend": "Limit reading to group",
+	"pageprotect-edit-limit-legend": "Limit editing to group",
+	"pageprotect-group-anyone": "No restrictions"
 }
