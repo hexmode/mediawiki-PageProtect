@@ -30,6 +30,9 @@ use User;
 use Xml;
 
 class Hook {
+	static protected $protections = [ 'read', 'edit' ];
+	static protected $suffix = "AllowedGroup";
+
 	/**
 	 * Called immediately after this extension is loaded.
 	 */
@@ -50,7 +53,7 @@ class Hook {
 													   array &$types ) {
 		// Remove the default move option
 		// FIXME Need to create a migration script.
-		$types = array_diff( $types, ['edit'] );
+		$types = array_diff( $types, self::$protections );
 		return true;
 	}
 
@@ -73,45 +76,82 @@ class Hook {
 		$isAllowed
 			= $article->getTitle()->userCan( "pageprotect-by-group", $user );
 		$disabledAttrib = $isAllowed ? [] : [ 'disabled' => 'disabled' ];
+		$pageProtections = self::getCurrentProtections( $article );
 
-		$output .= self::getProtectFormlet( "read", $disabledAttrib, $ctx );
-		$output .= self::getProtectFormlet( "edit", $disabledAttrib, $ctx );
+		foreach ( self::$protections as $prot ) {
+			$output .= self::getProtectFormlet( $prot, $disabledAttrib,
+												$pageProtections['perm'][$prot],
+												$ctx );
+		}
 
 		return true;
 	}
 
-	public static function getProtectFormlet( string $type,
-											  array $disabledAttrib,
-											  IContextSource $ctx ) {
+	/**
+	 * Get an array of the current protections that this page has.
+	 *
+	 * @param Article $article the page to check
+	 *
+	 * @return array permissions for this page in the following format:
+	 *   [ [ permission1 => [ groupId, ... ],
+	 *       permission2 => [ groupId, ... ] ],
+	 *     [ group1 = [ permission, ... ],
+	 *       ...
+	 *   ] ]
+	 */
+	public static function getCurrentProtections( Article $article ) {
+		$dbr = wfGetDB( DB_SLAVE );
+		$res = $dbr->select( 'pageprotect',
+							 [ 'ppt_permission', 'ppt_group' ],
+							 [ 'ppt_page' => $article->getPage()->getId() ],
+							 __METHOD__ );
+		$rowResult = [];
+		if ( count( $res ) > 0 ) {
+			foreach ( $res as $row ) {
+				$rowResult['perm'][$row->ppt_permission][] = $row->ppt_group;
+				$rowResult['group'][$row->ppt_group][] = $row->ppt_permission;
+			}
+		}
+
+		return $rowResult;
+	}
+
+	/**
+	 * Provides a piece of the form that we can use.
+	 *
+	 * @param string $type the type of protection being done
+	 * @param array $disabledAttrib what to provide for the disabled attribute
+	 * @param IContextSource $ctx the context
+	 *
+	 * @return string the html to display
+	 */
+	protected static function getProtectFormlet( string $type,
+												 array $disabledAttrib,
+												 array $pageProtections,
+												 IContextSource $ctx ) {
 		$output = "<tr><td>";
 		$output .= Xml::openElement( 'fieldset' );
 		$output .= "<legend>" .
 				wfMessage( "pageprotect-$type-limit-legend" )->parse() .
 				"</legend>";
 
-		# Load requested restriction level, default allowing everyone...
-		$restriction
-			= $ctx->getRequest()->getVal( $type . 'AllowedGroup', 'anyone' );
-
 		# Add a "no group restrictions" level
 		$groupList = User::getAllGroups();
-		array_unshift( $groupList, "anyone" );
 		# Show all groups in a <select>...
 		$attribs = [
-			'id'    => $type . 'AllowedGroup',
-			'name'  => $type . 'AllowedGroup',
+			'id'    => $type . self::$suffix,
+			'name'  => $type . self::$suffix . '[]', // needed for multi value submit
+			'multiple' => true,
 			'size'  => count( $groupList ),
 		] + $disabledAttrib;
+		$inverted = array_flip( $pageProtections );
+
 		$output .= Xml::openElement( 'select', $attribs );
 		foreach ( $groupList as $group ) {
-			if ( $group === "anyone" ) {
-				$label = wfMessage( 'pageprotect-group-' . $group )->text();
-			} else {
-				$label = wfMessage( 'group-' . $group )->text();
-			}
-
-			$output .= Xml::option( $label, $group, $group == $restriction );
+			$label = wfMessage( 'group-' . $group )->text();
+			$output .= Xml::option( $label, $group, isset( $inverted[ $group ] ) );
 		}
+
 		return $output . Xml::closeElement( 'select' ) . "</td></tr>";
 	}
 
@@ -119,10 +159,36 @@ class Hook {
 	 * Called when a protection form is submitted.
 	 *
 	 * @param Article $article the title being (un)protected
-	 * @param string &$output the html message string of an error
+	 * @param string &$error the html message string of an error
+	 * @param string $reasonstr the reason the user is giving for this change
 	 */
 	public static function onProtectionFormSave( Article $article,
-												 string &$output ) {
+												 string &$error,
+												 string $reasonstr
+	) {
+		$ctx = $article->getContext();
+		$req = $ctx->getRequest();
+		$pageId = $article->getPage()->getId();
+		$groups = [];
+		$dbw = wfGetDB( DB_MASTER );
+
+		$dbw->begin( __METHOD__ );
+		$dbw->delete( 'pageprotect', [ 'ppt_page' => $pageId ], __METHOD__ );
+		foreach ( self::$protections as $prot ) {
+			$groups = $req->getArray( $prot . self::$suffix );
+			if ( count( $groups ) > 0 ) {
+				foreach ( $groups as $group ) {
+					$dbw->insert( 'pageprotect',
+								  [ 'ppt_page' => $pageId,
+									'ppt_permission' => $prot,
+									'ppt_group' => $group ],
+								  __METHOD__ );
+				}
+			}
+		}
+		$dbw->commit( __METHOD__ );
+		// FIXME: Log the action?
+		return true;
 	}
 
 	/**
@@ -147,6 +213,7 @@ class Hook {
 	public static function onArticleProtect( Article $article, User $user,
 											 bool $protect, string $reason,
 											 bool $moveonly ) {
+		wfDebugLog( __METHOD__, "in ArticleProtect" );
 	}
 
 	/**
@@ -164,6 +231,7 @@ class Hook {
 													 string $reason,
 													 bool $moveonly
 	) {
+		wfDebugLog( __METHOD__, "in ArticleProtectComplete" );
 	}
 
 	/**
