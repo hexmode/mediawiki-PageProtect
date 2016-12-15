@@ -90,7 +90,7 @@ class Hook {
 
 		# Load requested restriction level, default allowing everyone...
 		$restriction
-			= $ctx->getRequest()->getVal( $type . 'AllowedGroup', 'none' );
+			= $ctx->getRequest()->getVal( $type . 'AllowedGroup', 'anyone' );
 
 		# Add a "no group restrictions" level
 		$groupList = User::getAllGroups();
