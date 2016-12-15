@@ -21,6 +21,7 @@ namespace PageProtect;
 
 use Action;
 use Article;
+use DatabaseUpdater;
 use IContextSource;
 use OutputPage;
 use RequestContext;
@@ -192,6 +193,20 @@ class Hook {
 	 */
 	public static function onUserCan( Title $title, User $user, string $action,
 									  bool &$result ) {
+	}
+
+	/**
+	 * Fired when MediaWiki is updated to allow extensions to update
+	 * the database.
+	 *
+	 * @param DatabaseUpdater $updater the db handle
+	 */
+	public static function onLoadExtensionSchemaUpdates(
+		DatabaseUpdater $updater
+	) {
+		$updater->addExtensionTable( 'pageprotect', __DIR__
+									 . "/../sql/schema.sql" );
+		return true;
 	}
 
 	/**

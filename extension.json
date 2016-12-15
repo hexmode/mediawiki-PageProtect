@@ -27,13 +27,14 @@
 		"PageProtect": "PageProtect\\Hook::makeConfig"
 	},
     "Hooks": {
-		"TitleGetRestrictionTypes": "PageProtect\\Hook::onTitleGetRestrictionTypes",
-		"ProtectionForm::buildForm": "PageProtect\\Hook::onProtectionFormBuildForm",
-		"ProtectionForm::save": "PageProtect\\Hook::onProtectionFormSave",
-		"ProtectionForm::showLogExtract": "PageProtect\\Hook::onProtectionFormShowLog",
 		"ArticleProtect": "PageProtect\\Hook::onArticleProtect",
 		"ArticleProtectComplete": "PageProtect\\Hook::onArticleProtectComplete",
 		"ImgAuthBeforeStream": "PageProtect\\Hook::onImgAuthBeforeStream",
+		"LoadExtensionSchemaUpdates": "PageProtect\\Hook::onLoadExtensionSchemaUpdates",
+		"ProtectionForm::buildForm": "PageProtect\\Hook::onProtectionFormBuildForm",
+		"ProtectionForm::save": "PageProtect\\Hook::onProtectionFormSave",
+		"ProtectionForm::showLogExtract": "PageProtect\\Hook::onProtectionFormShowLog",
+		"TitleGetRestrictionTypes": "PageProtect\\Hook::onTitleGetRestrictionTypes",
 		"userCan": "PageProtect\\Hook::onUserCan"
 	},
 	"config": {
