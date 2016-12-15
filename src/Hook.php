@@ -37,7 +37,8 @@ class Hook {
 	 * @return bool
 	 */
 	public static function onTitleGetRestrictionTypes( Title $title, array &$types ) {
-		// Don't think we want this
+		// Remove the default move option
+		$types = array_diff( $types, ['edit'] );
 		return true;
 	}
 
