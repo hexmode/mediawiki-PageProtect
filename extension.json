@@ -9,6 +9,7 @@
 	"url": "https://www.mediawiki.org/wiki/Extension:PageProtect",
 	"descriptionmsg": "pageprotect-desc",
 	"type": "specialpage",
+	"callback": "PageProtect\\Hook::initExtension",
 	"MessagesDirs": {
 		"PageProtect": [
 			"i18n"
@@ -37,6 +38,13 @@
 	},
 	"config": {
 		"_prefix": "PageProtect"
+	},
+	"ResourceModules": {
+		"ext.pageProtect": {
+			"styles": [
+				"resources/pp.css"
+			]
+		}
 	},
 	"manifest_version": 1
 }

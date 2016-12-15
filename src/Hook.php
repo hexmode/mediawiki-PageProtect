@@ -23,11 +23,20 @@ use Action;
 use Article;
 use IContextSource;
 use OutputPage;
+use RequestContext;
 use Title;
 use User;
 use Xml;
 
 class Hook {
+	/**
+	 * Called immediately after this extension is loaded.
+	 */
+	public static function initExtension() {
+		$ctx = RequestContext::getMain();
+		$ctx->getOutput()->addModules( 'ext.pageProtect' );
+	}
+
 	/**
 	 * Allows to modify the types of protection that can be applied.
 	 *
@@ -36,8 +45,10 @@ class Hook {
 	 *
 	 * @return bool
 	 */
-	public static function onTitleGetRestrictionTypes( Title $title, array &$types ) {
+	public static function onTitleGetRestrictionTypes( Title $title,
+													   array &$types ) {
 		// Remove the default move option
+		// FIXME Need to create a migration script.
 		$types = array_diff( $types, ['edit'] );
 		return true;
 	}
@@ -50,29 +61,36 @@ class Hook {
 	 *
 	 * @return bool
 	 */
-	public static function onProtectionFormBuildForm( Article $article, string &$output ) {
+	public static function onProtectionFormBuildForm( Article $article,
+													  string &$output ) {
 		$ctx = $article->getContext();
 		$user = $ctx->getUser();
 		if ( !$article->exists() ) {
 			return true;
 		}
-		$isAllowed = $article->getTitle()->userCan( "pageprotect-by-group", $user );
+
+		$isAllowed
+			= $article->getTitle()->userCan( "pageprotect-by-group", $user );
 		$disabledAttrib = $isAllowed ? [] : [ 'disabled' => 'disabled' ];
 
-        $output .= self::getProtectFormlet( "read", $disabledAttrib, $ctx );
-        $output .= self::getProtectFormlet( "edit", $disabledAttrib, $ctx );
+		$output .= self::getProtectFormlet( "read", $disabledAttrib, $ctx );
+		$output .= self::getProtectFormlet( "edit", $disabledAttrib, $ctx );
 
 		return true;
 	}
 
-    public static function getProtectFormlet( string $type, array $disabledAttrib, IContextSource $ctx ) {
-        $output = "<tr><td>";
+	public static function getProtectFormlet( string $type,
+											  array $disabledAttrib,
+											  IContextSource $ctx ) {
+		$output = "<tr><td>";
 		$output .= Xml::openElement( 'fieldset' );
-		$output .= "<legend>" . wfMessage( "pageprotect-$type-limit-legend" )->parse() .
+		$output .= "<legend>" .
+				wfMessage( "pageprotect-$type-limit-legend" )->parse() .
 				"</legend>";
 
 		# Load requested restriction level, default allowing everyone...
-		$restriction = $ctx->getRequest()->getVal( $type . 'AllowedGroup', 'none' );
+		$restriction
+			= $ctx->getRequest()->getVal( $type . 'AllowedGroup', 'none' );
 
 		# Add a "no group restrictions" level
 		$groupList = User::getAllGroups();
@@ -85,16 +103,16 @@ class Hook {
 		] + $disabledAttrib;
 		$output .= Xml::openElement( 'select', $attribs );
 		foreach ( $groupList as $group ) {
-            if ( $group === "anyone" ) {
-                $label = wfMessage( 'pageprotect-group-' . $group )->text();
-            } else {
-                $label = wfMessage( 'group-' . $group )->text();
-            }
+			if ( $group === "anyone" ) {
+				$label = wfMessage( 'pageprotect-group-' . $group )->text();
+			} else {
+				$label = wfMessage( 'group-' . $group )->text();
+			}
 
 			$output .= Xml::option( $label, $group, $group == $restriction );
 		}
 		return $output . Xml::closeElement( 'select' ) . "</td></tr>";
-    }
+	}
 
 	/**
 	 * Called when a protection form is submitted.
@@ -102,7 +120,8 @@ class Hook {
 	 * @param Article $article the title being (un)protected
 	 * @param string &$output the html message string of an error
 	 */
-	public static function onProtectionFormSave( Article $article, string &$output ) {
+	public static function onProtectionFormSave( Article $article,
+												 string &$output ) {
 	}
 
 	/**
@@ -111,7 +130,8 @@ class Hook {
 	 * @param Article $article the title being (un)protected
 	 * @param OutputPage $out the output
 	 */
-	public static function onProtectionFormShowLog( Article $article, OutputPage $out ) {
+	public static function onProtectionFormShowLog( Article $article,
+													OutputPage $out ) {
 	}
 
 	/**
@@ -123,9 +143,9 @@ class Hook {
 	 * @param string $reason Reason for protection
 	 * @param bool $moveonly move only or not
 	 */
-	public static function onArticleProtect(
-		Article $article, User $user, bool $protect, string $reason, bool $moveonly
-	) {
+	public static function onArticleProtect( Article $article, User $user,
+											 bool $protect, string $reason,
+											 bool $moveonly ) {
 	}
 
 	/**
@@ -137,19 +157,24 @@ class Hook {
 	 * @param string $reason Reason for protection
 	 * @param bool $moveonly whether it was for move only or not
 	 */
-	public static function onArticleProtectComplete(
-		Article $article, User $user, bool $protect, string $reason, bool $moveonly
+	public static function onArticleProtectComplete( Article $article,
+													 User $user,
+													 bool $protect,
+													 string $reason,
+													 bool $moveonly
 	) {
 	}
 
 	/**
 	 * Executed before the file is streamed to the user by img_auth.php
 	 *
-	 * @param Title $title title object for file as it would appear for the upload page
+	 * @param Title $title title object for file as it would appear
+	 *			for the upload page
 	 * @param string &$path the original file and path name when img_auth was
 	 *     invoked by the the web server
 	 * @param string &$name the name only component of the file
-	 * @param array &$result The location to pass back results of the hook routine
+	 * @param array &$result The location to pass back results of the hook
+	 *			routine
 	 *     (only used if failed)
 	 */
 	public static function onImgAuthBeforeStream(
@@ -165,7 +190,8 @@ class Hook {
 	 * @param string $action action concerning the title in question
 	 * @param bool &$result can the user perform this action?
 	 */
-	public static function onUserCan( Title $title, User $user, string $action, bool &$result ) {
+	public static function onUserCan( Title $title, User $user, string $action,
+									  bool &$result ) {
 	}
 
 	/**
