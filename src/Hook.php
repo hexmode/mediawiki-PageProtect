@@ -23,10 +23,12 @@ use Action;
 use Article;
 use DatabaseUpdater;
 use IContextSource;
+use Message;
 use OutputPage;
 use RequestContext;
 use Title;
 use User;
+use WikiPage;
 use Xml;
 
 class Hook {
@@ -67,6 +69,7 @@ class Hook {
 	 */
 	public static function onProtectionFormBuildForm( Article $article,
 													  string &$output ) {
+		$page = $article->getPage();
 		$ctx = $article->getContext();
 		$user = $ctx->getUser();
 		if ( !$article->exists() ) {
@@ -76,12 +79,14 @@ class Hook {
 		$isAllowed
 			= $article->getTitle()->userCan( "pageprotect-by-group", $user );
 		$disabledAttrib = $isAllowed ? [] : [ 'disabled' => 'disabled' ];
-		$pageProtections = self::getCurrentProtections( $article );
+		$pageProtections = self::getCurrentProtections( $page );
 
 		foreach ( self::$protections as $prot ) {
+			$protections = isset( $pageProtections['perm'][$prot] )
+						 ? $pageProtections['perm'][$prot]
+						 : [];
 			$output .= self::getProtectFormlet( $prot, $disabledAttrib,
-												$pageProtections['perm'][$prot]
-			);
+												$protections );
 		}
 
 		return true;
@@ -99,11 +104,12 @@ class Hook {
 	 *       ...
 	 *   ] ]
 	 */
-	public static function getCurrentProtections( Article $article ) {
+	public static function getCurrentProtections( WikiPage $page ) {
+		// FIXME: need caching here
 		$dbr = wfGetDB( DB_SLAVE );
 		$res = $dbr->select( 'pageprotect',
 							 [ 'ppt_permission', 'ppt_group' ],
-							 [ 'ppt_page' => $article->getPage()->getId() ],
+							 [ 'ppt_page' => $page->getId() ],
 							 __METHOD__ );
 		$rowResult = [];
 		if ( count( $res ) > 0 ) {
@@ -245,12 +251,22 @@ class Hook {
 	 *     invoked by the the web server
 	 * @param string &$name the name only component of the file
 	 * @param array &$result The location to pass back results of the hook
-	 *			routine
-	 *     (only used if failed)
+	 *			routine (only used if failed)
 	 */
 	public static function onImgAuthBeforeStream( Title $title, string &$path,
 												  string &$name, array &$result
 	) {
+	}
+
+	/**
+	 * Determines if this title is one that can be protected.
+	 *
+	 * @param Title $title the page to check
+	 *
+	 * @return bool
+	 */
+	protected static function protectableTitle( Title $title ) {
+		return $title->getNamespace() >= 0;
 	}
 
 	/**
@@ -259,10 +275,27 @@ class Hook {
 	 * @param Title $title the title in question
 	 * @param User $user the current user
 	 * @param string $action action concerning the title in question
-	 * @param bool &$result can the user perform this action?
+	 * @param any &$result can the user perform this action?
 	 */
-	public static function onUserCan( Title $title, User $user, string $action,
-									  bool &$result ) {
+	public static function onGetUserPermissionsErrors( Title $title, User $user,
+													   string $action,
+													   &$result ) {
+		if ( !self::protectableTitle( $title ) ) {
+			return true;
+		}
+		$pageProtections = self::getCurrentProtections(
+			WikiPage::factory( $title ) );
+		$inGroups = $user->getGroups();
+
+		if ( isset( $pageProtections['perm'][$action] ) ) {
+			$actionGroups = $pageProtections['perm'][$action];
+			$intersection = array_intersect( $inGroups, $actionGroups );
+			if ( count( $intersection ) === 0 ) {
+				$result = wfMessage( "pageprotect-group-member",
+									 [ [ 'list' => $actionGroups, 'type' => 'comma' ] ] );
+			}
+		}
+		return false;
 	}
 
 	/**
