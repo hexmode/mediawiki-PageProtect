@@ -13,3 +13,7 @@ wfLoadExtension( 'PageProtect' );
 </source>
 
 * Done - Navigate to Special:Version on your wiki to verify that the extension is successfully installed.
+
+* Current issues
+# Transclusions - Not currently handled
+# Files existence (but not content if img_auth is used), uploader, date of upload and name is revealed on Special:ListFiles and Special:NewFiles.  Description is shown in Special:ListFiles.
