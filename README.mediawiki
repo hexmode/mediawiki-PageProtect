@@ -1,6 +1,6 @@
 = PageProtect =
 
-This is MediaWiki extension to allow you to grant grops grant add control of the “read” right on a per-group basis to a page.
+This is MediaWiki extension to allow you to grant particular groups the “read” and/or “edit” to a page.
 
 == Installation ==
 
