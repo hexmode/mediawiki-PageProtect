@@ -254,8 +254,24 @@ class Hook {
 	 *			routine (only used if failed)
 	 */
 	public static function onImgAuthBeforeStream( Title $title, string &$path,
-												  string &$name, array &$result
+												  string &$name, &$result
 	) {
+		$user = RequestContext::getMain()->getUser();
+		$pageProtections = self::getCurrentProtections(
+			WikiPage::factory( $title ) );
+		$inGroups = $user->getGroups();
+
+		if ( isset( $pageProtections['perm']['read'] ) ) {
+			$actionGroups = $pageProtections['perm']['read'];
+
+			$intersection = array_intersect( $inGroups, $actionGroups );
+			if ( count( $intersection ) === 0 ) {
+				$result = [ 'img-auth-accessdenied',
+							'img-auth-noread' ];
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -293,9 +309,10 @@ class Hook {
 			if ( count( $intersection ) === 0 ) {
 				$result = wfMessage( "pageprotect-group-member",
 									 [ [ 'list' => $actionGroups, 'type' => 'comma' ] ] );
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	/**
