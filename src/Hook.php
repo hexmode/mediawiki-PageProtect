@@ -80,8 +80,8 @@ class Hook {
 
 		foreach ( self::$protections as $prot ) {
 			$output .= self::getProtectFormlet( $prot, $disabledAttrib,
-												$pageProtections['perm'][$prot],
-												$ctx );
+												$pageProtections['perm'][$prot]
+			);
 		}
 
 		return true;
@@ -121,14 +121,13 @@ class Hook {
 	 *
 	 * @param string $type the type of protection being done
 	 * @param array $disabledAttrib what to provide for the disabled attribute
-	 * @param IContextSource $ctx the context
+	 * @param array $pageProtections the protections on the page
 	 *
 	 * @return string the html to display
 	 */
 	protected static function getProtectFormlet( string $type,
 												 array $disabledAttrib,
-												 array $pageProtections,
-												 IContextSource $ctx ) {
+												 array $pageProtections ) {
 		$output = "<tr><td>";
 		$output .= Xml::openElement( 'fieldset' );
 		$output .= "<legend>" .
@@ -140,7 +139,7 @@ class Hook {
 		# Show all groups in a <select>...
 		$attribs = [
 			'id'    => $type . self::$suffix,
-			'name'  => $type . self::$suffix . '[]', // needed for multi value submit
+			'name'  => $type . self::$suffix . '[]',
 			'multiple' => true,
 			'size'  => count( $groupList ),
 		] + $disabledAttrib;
@@ -149,7 +148,8 @@ class Hook {
 		$output .= Xml::openElement( 'select', $attribs );
 		foreach ( $groupList as $group ) {
 			$label = wfMessage( 'group-' . $group )->text();
-			$output .= Xml::option( $label, $group, isset( $inverted[ $group ] ) );
+			$output .= Xml::option( $label, $group,
+									isset( $inverted[ $group ] ) );
 		}
 
 		return $output . Xml::closeElement( 'select' ) . "</td></tr>";
@@ -161,6 +161,8 @@ class Hook {
 	 * @param Article $article the title being (un)protected
 	 * @param string &$error the html message string of an error
 	 * @param string $reasonstr the reason the user is giving for this change
+	 *
+	 * @return bool
 	 */
 	public static function onProtectionFormSave( Article $article,
 												 string &$error,
@@ -246,8 +248,8 @@ class Hook {
 	 *			routine
 	 *     (only used if failed)
 	 */
-	public static function onImgAuthBeforeStream(
-		Title $title, string &$path, string &$name, array &$result
+	public static function onImgAuthBeforeStream( Title $title, string &$path,
+												  string &$name, array &$result
 	) {
 	}
 
@@ -268,6 +270,7 @@ class Hook {
 	 * the database.
 	 *
 	 * @param DatabaseUpdater $updater the db handle
+	 * @return bool always true
 	 */
 	public static function onLoadExtensionSchemaUpdates(
 		DatabaseUpdater $updater
