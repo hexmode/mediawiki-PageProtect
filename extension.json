@@ -42,9 +42,6 @@
 	},
 	"ResourceModules": {
 		"ext.pageProtect": {
-			"styles": [
-				"resources/pp.css"
-			]
 		}
 	},
 	"AvailableRights": [
