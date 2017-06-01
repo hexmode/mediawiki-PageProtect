@@ -26,7 +26,7 @@
 	"ConfigRegistry": {
 		"PageProtect": "PageProtect\\Hook::makeConfig"
 	},
-    "Hooks": {
+	"Hooks": {
 		"ArticleProtect": "PageProtect\\Hook::onArticleProtect",
 		"ArticleProtectComplete": "PageProtect\\Hook::onArticleProtectComplete",
 		"getUserPermissionsErrors": "PageProtect\\Hook::onGetUserPermissionsErrors",
