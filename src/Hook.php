@@ -68,7 +68,7 @@ class Hook {
 	 * @return bool
 	 */
 	public static function onProtectionFormBuildForm( Article $article,
-													  string &$output ) {
+													  &$output ) {
 		$page = $article->getPage();
 		$ctx = $article->getContext();
 		$user = $ctx->getUser();
@@ -131,7 +131,7 @@ class Hook {
 	 *
 	 * @return string the html to display
 	 */
-	protected static function getProtectFormlet( string $type,
+	protected static function getProtectFormlet( $type,
 												 array $disabledAttrib,
 												 array $pageProtections ) {
 		$output = "<tr><td>";
@@ -171,8 +171,8 @@ class Hook {
 	 * @return bool
 	 */
 	public static function onProtectionFormSave( Article $article,
-												 string &$error,
-												 string $reasonstr
+												 &$error,
+												 $reasonstr
 	) {
 		$ctx = $article->getContext();
 		$req = $ctx->getRequest();
@@ -219,7 +219,7 @@ class Hook {
 	 * @param bool $moveonly move only or not
 	 */
 	public static function onArticleProtect( Article $article, User $user,
-											 bool $protect, string $reason,
+											 bool $protect, $reason,
 											 bool $moveonly ) {
 		wfDebugLog( __METHOD__, "in ArticleProtect" );
 	}
@@ -236,7 +236,7 @@ class Hook {
 	public static function onArticleProtectComplete( Article $article,
 													 User $user,
 													 bool $protect,
-													 string $reason,
+													 $reason,
 													 bool $moveonly
 	) {
 		wfDebugLog( __METHOD__, "in ArticleProtectComplete" );
@@ -253,8 +253,8 @@ class Hook {
 	 * @param array &$result The location to pass back results of the hook
 	 *			routine (only used if failed)
 	 */
-	public static function onImgAuthBeforeStream( Title $title, string &$path,
-												  string &$name, &$result
+	public static function onImgAuthBeforeStream( Title $title, &$path,
+												  &$name, &$result
 	) {
 		$user = RequestContext::getMain()->getUser();
 		$pageProtections = self::getCurrentProtections(
@@ -294,7 +294,7 @@ class Hook {
 	 * @param any &$result can the user perform this action?
 	 */
 	public static function onGetUserPermissionsErrors( Title $title, User $user,
-													   string $action,
+													   $action,
 													   &$result ) {
 		if ( !self::protectableTitle( $title ) ) {
 			return true;
