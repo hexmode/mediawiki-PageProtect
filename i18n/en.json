@@ -7,5 +7,5 @@
 	"pageprotect-read-limit-legend": "Limit reading to group",
 	"pageprotect-edit-limit-legend": "Limit editing to group",
 	"pageprotect-group-anyone": "No restrictions",
-	"pageprotect-group-member": "You are not in the following groups: $1."
+	"pageprotect-group-member": "You are not in {{PLURAL:$1|this group|any of these groups}}: $2"
 }

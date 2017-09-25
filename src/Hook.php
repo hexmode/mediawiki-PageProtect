@@ -307,8 +307,11 @@ class Hook {
 			$actionGroups = $pageProtections['perm'][$action];
 			$intersection = array_intersect( $inGroups, $actionGroups );
 			if ( count( $intersection ) === 0 ) {
-				$result = wfMessage( "pageprotect-group-member",
-									 [ [ 'list' => $actionGroups, 'type' => 'comma' ] ] );
+				global $wgLang;
+				$result = wfMessage(
+					"pageprotect-group-member", count( $actionGroups ),
+					$wgLang->commaList( $actionGroups )
+				);
 				return false;
 			}
 		}
