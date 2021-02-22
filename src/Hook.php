@@ -248,7 +248,7 @@ class Hook {
 	 * @param Title $title title object for file as it would appear
 	 *			for the upload page
 	 * @param string &$path the original file and path name when img_auth was
-	 *     invoked by the the web server
+	 *     invoked by the web server
 	 * @param string &$name the name only component of the file
 	 * @param array &$result The location to pass back results of the hook
 	 *			routine (only used if failed)
