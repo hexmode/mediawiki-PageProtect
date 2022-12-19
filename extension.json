@@ -2,18 +2,14 @@
 	"name": "PageProtect",
 	"version": "0.1.0",
 	"license-name": "GPL-3.0+",
-	"author": [
-		"[http://mwstake.org Mark A. Hershberger]"
-	],
-	"require": [ "1.26" ],
+	"author": ["[http://mwstake.org Mark A. Hershberger]"],
+	"requires": { "MediaWiki": "1.26" },
 	"url": "https://www.mediawiki.org/wiki/Extension:PageProtect",
 	"descriptionmsg": "pageprotect-desc",
 	"type": "specialpage",
 	"callback": "PageProtect\\Hook::initExtension",
 	"MessagesDirs": {
-		"PageProtect": [
-			"i18n"
-		]
+		"PageProtect": ["i18n"]
 	},
 	"AutoloadClasses": {
 		"PageProtect\\PageProtect": "src/PageProtect.php",
@@ -37,12 +33,9 @@
 		"_prefix": "PageProtect"
 	},
 	"ResourceModules": {
-		"ext.pageProtect": {
-		}
+		"ext.pageProtect": {}
 	},
-	"AvailableRights": [
-		"pageprotect-by-group"
-	],
+	"AvailableRights": ["pageprotect-by-group"],
 	"GroupPermissions": {
 		"sysop": {
 			"pageprotect-by-group": true
